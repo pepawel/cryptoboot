@@ -1,5 +1,5 @@
 
-1. What is cryptoboot?
+I What is cryptoboot?
 
 It is set of tools for disk encryption on Unix. It is especially suited
 to encrypt root partition, so _everything_ (except kernel and
@@ -17,6 +17,7 @@ Features include:
 		easily grant/revoke access
 	* security - if user passphrase is compromissed revoke access
 		for this user and your data is safe.
+		FIXME: write more on this topic
 - easy administration
   * one can easily encrypt/decrypt devices and menage users using
 		simple CLI interface (fdisk like, but with readline bells
@@ -26,7 +27,18 @@ Features include:
 	* pkcs#5 pbkdf for passphrase based key derivation
 		(salt + interation count)
 
-2. How to install cryptoboot on linux machine without initrd support.
+Initial encryption of devices is performed using kernel driver,
+not userland tool. It is faster in runtime, but your kernel
+needs to support that particular crypto driver.
+This process is very similiar to:
+
+# dd if=/dev/hda1 of=/dev/loop0
+
+although it is better at error handling. I use cryptoboot on my own
+machine, so I needed fault-awardness. For example bad-sectors are
+skipped, as opposed to simple dd method, where entire process stops.
+
+II How to install cryptoboot on linux machine without initrd support.
 
 At first you need to compile cryptoboot tools.
 Currently cryptoboot requires:
@@ -61,12 +73,12 @@ Now, after you have booted and got shell follow these steps.
 	 c) Mount it:
 	    # mount /dev/sda1 /mnt
 	 d) Copy template token configuration to it:
-	    # cp cryptoken.xml /mnt/
+	    # cp templates/cryptoken.xml /mnt/
 	 e) Umount token:
 	    # umount /mnt
 
-0. Create cryptotab.xml from template. You need to add
-   following attributes to <token> element:
+0. Create cryptotab.xml from templates/cryptotab.xml. You need to
+   change following attributes in <token> element:
 	 dev="/dev/sda1"
 	 fstype="ext2"
 	 mnt="/mnt" (this directory must exist on boot partition)
@@ -138,7 +150,9 @@ only good passphrase can protect your data.
 I recomend diceware method (www.diceware.com). Passphrases
 generated using this scheme are easy to remember and secure.
 
-Contact
+III Contact
+
+Contact me thru my sourceforge email alias c09@users.sourceforge.net
 
 ---------
 [1] Note: if you want to use usb drive in Windows it is smart

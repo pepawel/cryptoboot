@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<cryptoken xmlns="http://cryptoboot.sf.net/">
+	<info>
+		<name>My cool optional token</name>
+		<owner>Joe Optional</owner>
+	</info>
+	<users />
+</cryptoken>

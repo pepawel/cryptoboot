@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<cryptotab xmlns="http://cryptoboot.sf.net/">
+	<token dev="/dev/sdxx" fstype="vfat"
+				 mnt="/xxx/" file="cryptoken.xml" />
+	<users />
+	<devices />
+</cryptotab>
