@@ -1,0 +1,44 @@
+Implement or at least document somewhere that cryptotab.xml may not
+contain user names - "name" property can be removed from "user" nodes.
+It increases anonimity, when cryptotab.xml falls into unwanted hands,
+but also make user administration more complex, because administrator
+doesn't know who can access his machine.
+
+---------------------
+DONE 1. Make encryption/decryption function fault aware.
+DONE 1.5. Remove public key stuff.
+DONE 2. Release 1.0 version.
+3. Modularize each driver, use openssl ENGINE for algorithm
+	 independence. Each driver should be some kind of object implementing
+	 general (the same for all drivers) and specific (only for this
+	 driver) methods.
+	 Maybe drop OpenSSL in favour of gcrypt? (gcrypt - very good handling
+	 of keys - great abstraction)
+4. Isolate configuration xml from internal representation.
+5. Remove "startcrypto" command from cryptodevcfg, create small
+	 utility to encrypt/decrypt marked devices (f.e. "cryptodo")
+6. Remove "-a" option from cryptodevcfg, create small utility
+	 similiar to losetup, but aware of cryptotab.xml - analogy
+	 to mount + fstab pair. This utiliy should allow attaching,
+	 detaching devices which are configured in cryptotab.
+	 Utility should contain option, which allows to test which
+	 drivers are available in OS.
+	 "-a" option should be included for attaching all devices.
+7. Every tool should contain option to specify location
+	 of configuration file(s).
+8. Refactor code (remove bloat, replace every malloc with xmalloc
+	 which dies on error, check for memory leaks in xml, fix Makefile
+	 to not link with not needed libraries etc.)
+9. Release 2.0 version.
+10. Think about how to allow other programs to interact with
+	  crypto tools (command line commands? pipes? named-pipes?).
+		UPDATE: Definitely implement everything as library to
+		allow use of cryptoboot in distributions.
+11. Implement random key as a optional property of key
+	  and multikey node. Maybe add offset property to ease swap
+	  partition recognition.
+X 12. Think about central administration of tokens, users and machines.
+13. Use af splitter for key storage:
+		<multikey123 key="/somewhere/key1" />
+		/somewhere/key1 would be forensics protected file.
+

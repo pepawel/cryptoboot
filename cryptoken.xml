@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<cryptoken xmlns="http://cryptoboot.internetdsl.pl/cryptoken1.0">
+	<info>
+		<name>Fill me</name>
+		<owner>Fill me</owner>
+	</info>
+	<users />
+</cryptoken>

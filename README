@@ -1,0 +1,150 @@
+
+1. What is cryptoboot?
+
+It is set of tools for disk encryption on Unix. It is especially suited
+to encrypt root partition, so _everything_ (except kernel and
+cryptoboot inself) is encrypted.
+Cryptoboot does its job using external "drivers" for actual
+crypto work. Currently it supports loop-AES by Jari Ruusu on Linux,
+but I hope future versions will support Linux dm_crypt, NetBSD's cgd,
+FreeBSD's geom, OpenBSD's encrypted vnd and maybe Linux cryptoloop
+and ppdd. The architecture is extendable (xml configuration file),
+so maybe some day there will show support for Windows CompuSec
+(to access Windows drives from Unix).
+Features include:
+- key hierarchy
+	* multiple users - you decide who can access your disks,
+		easily grant/revoke access
+	* security - if user passphrase is compromissed revoke access
+		for this user and your data is safe.
+- easy administration
+  * one can easily encrypt/decrypt devices and menage users using
+		simple CLI interface (fdisk like, but with readline bells
+		and whistles)
+- standards:
+	* xml
+	* pkcs#5 pbkdf for passphrase based key derivation
+		(salt + interation count)
+
+2. How to install cryptoboot on linux machine without initrd support.
+
+At first you need to compile cryptoboot tools.
+Currently cryptoboot requires:
+- openssl library
+- libxml2
+- ncruses
+- cdk (curses developement kit)
+- readline
+
+Compilation:
+$ make
+
+Then prepare boot partition, which will contain:
+* kernel
+* modules required for encryption and token access
+  Currently only one crypto driver is supported by cryptoboot
+	- loop-AES in 64 key mode; this mode is also known as
+	"multi-key-v2 on disk format"; only 128 bit AES is supported for now.
+	Refer to loop-AES README for installation instructions.
+* base system with at least:
+	sh, mount, insmod, mkfs.ext2, cp, some text editor
+* cryptoboot tools
+* optional: cmatrix and required files (ncurses, fonts etc.)
+
+Configure your bootloader to boot from this partition and reboot.
+Now, after you have booted and got shell follow these steps.
+
+1. Prepare token. Assuming your token is on /dev/sda:
+   a) Create partition on token - for example /dev/sda1 (see [1])
+	 b) Create filesystem on it - for example ext2:
+	    # mkfs.ext2 /dev/sda1
+	 c) Mount it:
+	    # mount /dev/sda1 /mnt
+	 d) Copy template token configuration to it:
+	    # cp cryptoken.xml /mnt/
+	 e) Umount token:
+	    # umount /mnt
+
+0. Create cryptotab.xml from template. You need to add
+   following attributes to <token> element:
+	 dev="/dev/sda1"
+	 fstype="ext2"
+	 mnt="/mnt" (this directory must exist on boot partition)
+	 file="cryptoken.xml"
+
+1. Create master key:
+
+   # masterkeycfg create
+
+2. Create first user on token:
+
+   # cryptokencfg
+
+	 Type 'add' and enter user data. After that type 'save' and 'quit'.
+
+3. Add user you have created to cryptotab:
+
+   # cryptousercfg
+
+	 Type 'add', insert token, select user you have added.
+	 Then enter the password. User should be added to cryptotab.
+	 This operation should also update <encmagic> element in cryptotab,
+	 so after login and master password decryption it will be verified.
+	 Type 'save' and 'quit'.
+
+4. Now you can encrypt your partitions:
+
+   # cryptodevcfg
+
+	 Type 'encrypt', select partition, driver you want, and virtual
+	 device.
+	 You have to be carefull at this step, because interuption
+	 in the middle of encryption will result in data loss.
+	 (well, you can manually restart encryption from the middle using
+	  external tools, but it is not so easy)
+
+5. Remove master key from shared memory:
+
+   # masterkeycfg clean
+
+6. Modify cryptoboot script, to mount right device as root
+   filesystem. Check it to see if right modules are loaded etc.
+
+7. Modify your bootloader configuration to load /sbin/cryptoboot
+   instead of /sbin/init. Reboot your machine.
+
+8. If everything went good, you will be prompted for token,
+   user and password after the kernel boots. Then cryptoboot
+	 will setup all devices, mount the root as '/' and pass
+	 control to /sbin/init from encrypted device.
+
+9. Boot scripts will complain, because your fstab entries
+   point to encrypted partitions. You should change these
+	 entries to virtual devices, as configured in cryptotab.
+	 After that, reboot your system.
+
+10. That's all. If you want to encrypt/decrypt partitions
+    use 'cryptodevcfg', to manage token use 'cryptokencfg'
+		and to add/remove users who are allowed to initialise
+		device encryption on this machine use 'cryptousercfg'.
+
+Tools cryptokencfg and cryptousercfg could be safely used in
+multiuser mode. But cryptodevcfg should be used only, when
+devices it operates on are not in use.
+
+Note on passphrase choosing.
+When attacker has access to your cryptoken.xml and cryptotab.xml
+only good passphrase can protect your data.
+I recomend diceware method (www.diceware.com). Passphrases
+generated using this scheme are easy to remember and secure.
+
+Contact
+
+---------
+[1] Note: if you want to use usb drive in Windows it is smart
+					to create 2 partitions. Make the first one big to hold
+					your files, while the second on could be very small.
+					It will contains your cryptoken.xml.
+					Second partition won't be visible from windows in
+					default mode, so you can't destroy your keys by
+					accident.

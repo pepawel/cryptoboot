@@ -1,0 +1,91 @@
+#!/bin/sh
+
+# Script initializes encryption and launches target OS.
+
+# FIXME:
+# This script is suited to my particular computer,
+# (Debian 3.0/kernel 2.4.26) - make it more universal.
+
+PATH=/sbin:/bin
+# /usr in target fs
+PATH=$PATH:/usr/sbin:/usr/bin
+
+export PATH
+
+# Mount proc (when not mounted insmod shows warnings)
+mount -n -t proc proc /proc
+# Remount root rw, so insmod will be quiet
+# FIXME: get rid of this constant
+mount -n /dev/hda5 / -o rw,remount
+
+# Load required modules
+modprobe nls_iso8859-1
+modprobe nls_cp437
+modprobe vfat
+modprobe fat
+modprobe sd_mod
+#modprobe ds
+#modprobe yenta_socket
+#modprobe pcmcia_core
+modprobe mousedev
+modprobe usbmouse
+modprobe input
+modprobe usb-storage
+modprobe scsi_mod
+modprobe usb-uhci
+modprobe ehci-hcd
+#modprobe parport_pc
+#modprobe parport
+#modprobe via-ircc
+#modprobe irda
+#modprobe edd
+#modprobe thermal
+#modprobe processor
+#modprobe fan
+#modprobe button
+#modprobe battery
+#modprobe ac
+#modprobe agpgart
+#modprobe via82cxxx_audio
+#modprobe ac97_codec
+#modprobe uart401
+#modprobe sound
+#modprobe via-rhine
+#modprobe mii
+#modprobe af_packet
+modprobe rtc
+
+#insmod.modutils usb-uhci 2> /dev/null
+#insmod.modutils nls_cp437 2> /dev/null
+#insmod.modutils nls_iso8859-1 2> /dev/null
+#insmod.modutils loop 2> /dev/null
+#insmod.modutils fat 2> /dev/null
+#insmod.modutils vfat 2> /dev/null
+#insmod.modutils sd_mod 2> /dev/null
+
+sleep 3
+
+# Get masterKey and store it in shared memory segment
+# In case of failure - matrix has you ;-)
+readtoken || cmatrix -balu 3
+
+clear
+
+# Setup devices using key from shm
+cryptodevcfg -a
+
+# Remove authdata from shared memory
+masterkeycfg clean
+
+# Mount target root filesystem (in our case it is on /dev/loop0)
+mount -n -t ext2 /dev/loop0 /target_root -o ro
+
+# Umount proc and remount root back ro
+umount -n /proc
+# FIXME: get rid of this constant
+mount -n /dev/hda5 / -o ro,remount
+
+cd /target_root
+pivot_root . cryptoboot
+cd /
+exec chroot . /sbin/init < /dev/tty1 > /dev/tty1 2>&1
